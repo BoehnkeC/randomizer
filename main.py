@@ -1,5 +1,7 @@
 import random
 import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 def generate_random_number(count=100):
@@ -21,15 +23,34 @@ def create_array(cols=6, rows=1):
     return np.zeros(shape=(rows, cols))
 
 
+def get_numbers(arr=None):
+    for i in range(arr.shape[1]):
+        arr[:, i] = generate_random_number(count=arr.shape[0])
+
+    return arr
+
+
+def get_counts(arr=None, _counts=None):
+    for i in range(arr.shape[1]):
+        _counts[i, :] = get_unique_counts(arr=arr[:, i])
+
+    return _counts
+
+
+def plot_counts(arr=None):
+    print(arr.shape)
+
+    sns.heatmap(arr, cmap=sns.color_palette("Spectral", as_cmap=True))
+    plt.show()
+
+
 if __name__ == "__main__":
     row_count = 1000000  # 1 million
     numbers = create_array(rows=row_count)
     counts = create_array(rows=6, cols=10)
 
-    for i in range(numbers.shape[1]):
-        numbers[:, i] = generate_random_number(count=numbers.shape[0])
-
+    numbers = get_numbers(arr=numbers)
+    counts = get_counts(arr=numbers, _counts=counts)
     stats = get_statistics(arr=numbers)
 
-    for i in range(numbers.shape[1]):
-        counts[i, :] = get_unique_counts(arr=numbers[:, i])
+    plot_counts(arr=counts)
