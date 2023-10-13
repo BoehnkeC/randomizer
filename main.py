@@ -43,7 +43,7 @@ def plot_counts(arr=None):
 
 
 if __name__ == "__main__":
-    row_count = 10000000  # 1 million
+    row_count = 1000  # 1 million
     numbers = create_array(rows=row_count)
     counts = create_array(rows=6, cols=10)
 
