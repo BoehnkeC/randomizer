@@ -3,6 +3,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import dask.array as da
+import dask.dataframe as daf
 
 
 class Array:
@@ -27,6 +28,7 @@ class Statistics:
     def __init__(self, random_arr=None, arr=None):
         self.rarr = random_arr
         self.arr = arr
+        self.df = None
         self.mean = None
         self.std = None
 
@@ -35,7 +37,16 @@ class Statistics:
         self.std = self.rarr.std(axis=1)
 
     def get_counts(self):
-        self.arr = np.unique(self.rarr, return_counts=True)[-1]
+        def _my_function():
+            print("Hello")
+
+        blocks = da.map_blocks(_my_function, self.rarr)
+        # self.arr = np.unique(self.rarr.compute(), return_counts=True)[-1]
+        print(blocks)
+
+    @staticmethod
+    def _my_function():
+        print("Hello")
 
 
 def plot_counts(arr=None):
@@ -44,7 +55,7 @@ def plot_counts(arr=None):
 
 
 if __name__ == "__main__":
-    array = Array(rows=10000)
+    array = Array(rows=1000)
     array.create_random_array()
 
     stats = Statistics(random_arr=array.arr, arr=array.create_array())
