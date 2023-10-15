@@ -5,7 +5,7 @@ import dask.array as da
 
 
 class Array:
-    def __init__(self, rows=1, digits=6, numbers=10, chunk_rows=2):
+    def __init__(self, rows=1, digits=6, numbers=10, chunk_rows=1000):
         self.rows = rows
         self.digits = digits
         self.chunk_rows = chunk_rows
@@ -19,15 +19,14 @@ class Array:
             chunks=(self.chunk_rows, self.digits)
         )
 
-    def create_array(self, rows=10, cols=6):
-        self.knight = np.zeros(shape=(rows, cols), dtype=np.float64)
+    def create_array(self, rows=10, cols=6, dtype=np.float64):
+        self.knight = np.zeros(shape=(rows, cols), dtype=dtype)
 
 
 class Statistics:
     def __init__(self, random_arr=None):
         self.rarr = random_arr
         self.counts = None
-        self.df = None
         self.mean = None
         self.std = None
 
@@ -35,27 +34,12 @@ class Statistics:
         self.mean = self.rarr.mean(axis=1)
         self.std = self.rarr.std(axis=1)
 
-    def get_counts(self):
-        """TODO:
-        pap_blocks returns the result as many times as there are chunks.
-        Hence, the array (10 x 6) returned twice if there are 2 chunks.
-        The array is filled with the unique counts per chunk and must be added chunk-wise.
-        Consider creating a target dask array with equal chunk count as the input array, (10 x 6 x chunks).
-        Put the results from map_block into the respective chunks and sum the chunks with dask methods.
-        """
-        tmp = da.map_blocks(self._my_function, self.rarr, dtype=np.int8).compute()
-        print(type(tmp))
-        # print(tmp.compute())
+    def get_counts(self, arr=None):
+        self.counts = arr
 
-    def _my_function(self, chunk):
-        result = np.zeros(shape=(10, 6), dtype=np.float64)
-
-        # for n in range(1):
-        uniques, counts = np.unique(chunk[:, 0], return_counts=True, axis=0)
-        result[uniques, 0] += counts
-        print(result)
-
-        return result
+        for n in range(6):
+            uniques, counts = da.unique(self.rarr[:, n], return_counts=True)
+            self.counts[uniques.compute(), n] += counts.compute()
 
 
 def plot_counts(arr=None):
@@ -64,13 +48,12 @@ def plot_counts(arr=None):
 
 
 if __name__ == "__main__":
-    array = Array(rows=4)
-    array.create_random_array()
-    print(array.arr.compute())
+    arrays = Array(rows=10000000)
+    arrays.create_random_array()
+    arrays.create_array(rows=10, cols=6, dtype=np.int64)
 
-    stats = Statistics(random_arr=array.arr)
-    stats.get_first_level_statistics()
-    stats.get_counts()
-    # print(stats.counts.compute())
+    stats = Statistics(random_arr=arrays.arr)
+    # stats.get_first_level_statistics()
+    stats.get_counts(arr=arrays.knight)
 
-    # plot_counts(arr=counts)
+    plot_counts(arr=stats.counts)
