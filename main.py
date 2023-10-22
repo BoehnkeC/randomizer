@@ -1,40 +1,45 @@
-import random
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+import dask.array as da
 
 
-def generate_random_number(count=100):
-    return [random.randint(0, 9) for r in range(count)]
+class Array:
+    def __init__(self, rows=1, digits=6, numbers=10, chunk_rows=100000):
+        self.rows = rows
+        self.digits = digits
+        self.chunk_rows = chunk_rows
+        self.numbers = numbers
+        self.arr = None  # array holding the random numbers
+        self.knight = None  # array holding statistical numbers, like frequency, called knight because flexible
+
+    def create_random_array(self):
+        self.arr = da.from_array(
+            np.random.randint(self.numbers, size=(self.rows, self.digits), dtype=np.int8),
+            chunks=(self.chunk_rows, self.digits)
+        )
+
+    def create_array(self, rows=10, cols=6, dtype=np.float64):
+        self.knight = np.zeros(shape=(rows, cols), dtype=dtype)
 
 
-def get_statistics(arr=None):
-    _mean = np.mean(arr, axis=1)
-    _std = np.std(arr, axis=1)
+class Statistics:
+    def __init__(self, random_arr=None):
+        self.rarr = random_arr
+        self.counts = None
+        self.mean = None
+        self.std = None
 
-    return np.array([_mean, _std])
+    def get_first_level_statistics(self):
+        self.mean = self.rarr.mean(axis=1)
+        self.std = self.rarr.std(axis=1)
 
+    def get_counts(self, arr=None):
+        self.counts = arr
 
-def get_unique_counts(arr=None):
-    return np.unique(arr, return_counts=True)[-1]
-
-
-def create_array(cols=6, rows=1):
-    return np.zeros(shape=(rows, cols))
-
-
-def get_numbers(arr=None):
-    for i in range(arr.shape[1]):
-        arr[:, i] = generate_random_number(count=arr.shape[0])
-
-    return arr
-
-
-def get_counts(arr=None, _counts=None):
-    for i in range(arr.shape[1]):
-        _counts[i, :] = get_unique_counts(arr=arr[:, i])
-
-    return _counts
+        for n in range(6):
+            uniques, counts = da.unique(self.rarr[:, n], return_counts=True)
+            self.counts[uniques.compute(), n] += counts.compute()
 
 
 def plot_counts(arr=None):
@@ -43,12 +48,12 @@ def plot_counts(arr=None):
 
 
 if __name__ == "__main__":
-    row_count = 1000  # 1 million
-    numbers = create_array(rows=row_count)
-    counts = create_array(rows=6, cols=10)
+    arrays = Array(rows=10000000)
+    arrays.create_random_array()
+    arrays.create_array(rows=10, cols=6, dtype=np.int64)
 
-    numbers = get_numbers(arr=numbers)
-    counts = get_counts(arr=numbers, _counts=counts)
-    stats = get_statistics(arr=numbers)
+    stats = Statistics(random_arr=arrays.arr)
+    # stats.get_first_level_statistics()
+    stats.get_counts(arr=arrays.knight)
 
-    plot_counts(arr=counts)
+    plot_counts(arr=stats.counts)
