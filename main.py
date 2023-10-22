@@ -5,7 +5,7 @@ import dask.array as da
 
 
 class Array:
-    def __init__(self, rows=1, digits=6, numbers=10, chunk_rows=1000):
+    def __init__(self, rows=1, digits=6, numbers=10, chunk_rows=100000):
         self.rows = rows
         self.digits = digits
         self.chunk_rows = chunk_rows
